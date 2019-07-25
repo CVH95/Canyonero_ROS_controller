@@ -75,27 +75,39 @@ void realRosClass::start_streaming_node()
 	ros::NodeHandle node("~");
 	ROS_INFO("ROS node started under the name %s. \n", stream_name.c_str());
 
-	cv::namedWindow("Canyonero Onboard View");
-	cv::startWindowThread();
+	//cv::namedWindow("Canyonero Onboard View", CV_WINDOW_AUTOSIZE);
+	//cv::startWindowThread();
 	image_transport::ImageTransport it(node);
 
 	//Start subscriber:
     image_transport::Subscriber img_subscriber = it.subscribe("/camera_driver/image_raw", 1, &realRosClass::streamCallback, this);
 
-	ros::spin();
+	rosSpin();
 
-	cv::destroyWindow("Canyonero Onboard View");
+	//cv::destroyWindow("Canyonero Onboard View");
 }
 
 
 // Receive video stream (image transport)
 void realRosClass::streamCallback(const sensor_msgs::ImageConstPtr& img)
 {
+	//ROS_INFO("Entered callback");
     try
     {
-        //cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(img, "bgr8");
-		cv::imshow("Canyonero Onboard View", cv_bridge::toCvShare(img, "bgr8")->image);
-        cv::waitKey(30);
+		cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(img, enc::BGR8);
+		//cv::imshow("Canyonero Onboard View", cv_bridge::toCvShare(img, "bgr8")->image);
+		cv::Mat fframe = cv_ptr->image;
+
+		if(!fframe.empty())
+		{
+			ROS_INFO("Received frame data.");
+			cv::imshow("Canyonero Onboard View", fframe);
+        	cv::waitKey(1);
+		}
+		else
+		{
+			ROS_ERROR("Did not receive any frame data.");
+		}
     }
     catch(cv_bridge::Exception& e)
     {
