@@ -3,45 +3,88 @@
 
 // ROS Controller
 
-// MSG generation to communicate cameras and GPIOs
+// MSG generation to communicate with GPIOs
 
 #include "realRosClass.h"
 
 
 // Costructor
-realRosClass::realRosClass(int argc, char** argv)
+realRosClass::realRosClass()
 {
-    int _argc=0;
-	char** _argv = NULL;
-	
-	string nodename = "canyonero_ros_controller";
-	
-	ros::init(_argc, _argv, nodename);
-	
-	if(!ros::master::check())
-		ROS_ERROR("ros::master::check() did not pass!");
-		
-	ros::NodeHandle node("~");
-	ROS_INFO("ROS node started under the name %s.", nodename.c_str());
-
-    //image_transport::ImageTransport it(node);
-    
-    // Start publisher:
-    pub_direction = node.advertise<std_msgs::Int32>("/canyonero_ros_drivers/canyonero/joint_direction", 1);
-
-    // Start subscriber:
-    img_subscriber = node.subscribe("canyonero_ros_drivers/canyonero/camera/image_raw", 1, &realRosClass::streamCallback, this);
-    //sub = it.subscribe("canyonero_ros_drivers/canyonero/camera/image_raw", 1, &realRosClass::streamCallback, this);
-
-    rate = new ros::Rate(17*4);
+    cout << "CANYONERO" << endl << endl;
+	cout << "Creating a new node..." << endl << endl;
 }
 
 
 // Destructor
 realRosClass::~realRosClass()
 {
-    ROS_INFO("ROS node canyonero_ros_controller was terminated");
+    ROS_INFO("ROS node was terminated");
 	ros::shutdown();
+}
+
+
+void realRosClass::start_control_node()
+{
+	int _argc=0;
+	char** _argv = NULL;
+	
+	ros::init(_argc, _argv, controller_name);
+	
+	if(!ros::master::check())
+	{
+		ROS_ERROR("ros::master::check() did not pass!");
+	}
+	else
+	{
+		const string _host = ros::master::getHost();
+		const string _uri = ros::master::getURI();
+		ROS_INFO("ROS Master Hostname: %s.", _host.c_str());
+		ROS_INFO("ROS Master URI: %s/ \n", _uri.c_str());
+	}
+		
+	ros::NodeHandle node("~");
+	ROS_INFO("ROS node started under the name %s. \n", controller_name.c_str());
+
+	// Start publisher:
+    pub_direction = node.advertise<std_msgs::Int32>("/gpio_driver/joint_direction", 1);
+
+	rate = new ros::Rate(17*4);
+}
+
+
+void realRosClass::start_streaming_node()
+{
+	int _argc=0;
+	char** _argv = NULL;
+	
+	ros::init(_argc, _argv, stream_name);
+	
+	if(!ros::master::check())
+	{
+		ROS_ERROR("ros::master::check() did not pass!");
+	}
+	else
+	{
+		const string _host = ros::master::getHost();
+		const string _uri = ros::master::getURI();
+		ROS_INFO("ROS Master Hostname: %s.", _host.c_str());
+		ROS_INFO("ROS Master URI: %s/ \n", _uri.c_str());
+	}
+
+	ros::NodeHandle node("~");
+	ROS_INFO("ROS node started under the name %s. \n", stream_name.c_str());
+
+	cv::namedWindow("Canyonero Onboard View");
+	cv::startWindowThread();
+	image_transport::ImageTransport it(node);
+
+	//Start subscriber:
+    image_transport::Subscriber img_subscriber = it.subscribe("/camera_driver/image_raw", 1, &realRosClass::streamCallback, this);
+
+	ros::spin();
+
+	cv::destroyWindow("Canyonero Onboard View");
 }
 
 
@@ -50,8 +93,9 @@ void realRosClass::streamCallback(const sensor_msgs::ImageConstPtr& img)
 {
     try
     {
-        cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(img, "bgr8");
-        frame = cv_ptr->image;
+        //cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(img, "bgr8");
+		cv::imshow("Canyonero Onboard View", cv_bridge::toCvShare(img, "bgr8")->image);
+        cv::waitKey(30);
     }
     catch(cv_bridge::Exception& e)
     {
@@ -61,7 +105,7 @@ void realRosClass::streamCallback(const sensor_msgs::ImageConstPtr& img)
 
 
 // Receive video stream
-/*/void realRosClass::streamCallback(const sensor_msgs::Image& img)
+/*void realRosClass::streamCallback(const sensor_msgs::Image& img)
 {
     try
     {
@@ -94,15 +138,13 @@ void realRosClass::send_command(int direc)
 
 
 // ROS Keyboard Teleop
-bool realRosClass::keyboard_control()
+void realRosClass::keyboard_control()
 {
+	start_ncurses();
+
     int cht = 0;
-	
-	bool running = true;
-	//int sp = dutyCycleValue;
-	
+	running = true;
 	info_control();
-	
 	cht = getch();
 	
 	switch(cht)
@@ -155,7 +197,7 @@ bool realRosClass::keyboard_control()
 	// Update state on ncurses window
     wrefresh(win);
 
-	return running;
+	rosSpinOnce();
 }
 
 
@@ -207,26 +249,26 @@ void realRosClass::end_ncurses()
 // Display message in ncurses window
 void realRosClass::info_control()
 {
-    move(0,0);
+    move(2,0);
 	printw("... ROS Keyboard Teleoperation ...");
-	move(2,0);
-	printw("  >> Forward: w");
-	move(3,0);
-	printw("  >> Backward: s");
 	move(4,0);
-	printw("  >> Turn right (on spot): d");
+	printw("  >> Forward: w");
 	move(5,0);
-	printw("  >> Turn left (on spot): a");
+	printw("  >> Backward: s");
 	move(6,0);
-	printw("  >> Stop: b");
+	printw("  >> Turn right (on spot): d");
 	move(7,0);
-	printw("  >> Increase speed: k");
+	printw("  >> Turn left (on spot): a");
 	move(8,0);
-	printw("  >> Reduce speed: j");
+	printw("  >> Stop: b");
 	move(9,0);
+	printw("  >> Increase speed: k");
+	move(10,0);
+	printw("  >> Reduce speed: j");
+	move(11,0);
 	printw("  >> Exit program: p");
-	move(13,0);
-	printw("Direction = %s", state.c_str());
 	move(14,0);
-	printw("Current speed = %d (%)", speed);
+	printw("Direction = %s", state.c_str());
+	//move(14,0);
+	//printw("Current speed = %d (%)", speed);
 }

@@ -1,0 +1,6 @@
+<launch>
+  <!-- pkg = "pkg_name" type="executable_name" name="node_name" -->
+  <!-- Detector nodes -->
+  <node pkg="canyonero_ros_controller" type="canyonero_ros_control_node" name="canyonero_ros_control_node" output="screen"> </node> 
+  <node pkg="canyonero_ros_controller" type="canyonero_ros_stream_node" name="canyonero_ros_streaming_node" output="screen" launch-prefix="xterm -e"></node>
+</launch>

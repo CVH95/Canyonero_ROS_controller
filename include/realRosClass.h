@@ -35,15 +35,17 @@ class realRosClass
 
         // Private ROS variables
         ros::Publisher pub_direction;
-        ros::Subscriber img_subscriber;
-        //image_transport::Subscriber sub;
+        //ros::Subscriber img_subscriber;
+        image_transport::Subscriber sub;
         ros::Rate* rate;
 
-        sensor_msgs::Image ros_img;
+        sensor_msgs::ImagePtr ros_img;
         cv::Mat frame;
         void streamCallback(const sensor_msgs::ImageConstPtr& img);
         //void streamCallback(const sensor_msgs::Image& img);
 
+        string controller_name = "canyonero_ros_control_node";
+        string stream_name = "canyonero_ros_streaming_node";
         int _Direction = 0;
         int speed = 50;
         string state = "STOP";
@@ -52,21 +54,28 @@ class realRosClass
     public:
 
         // Constructor
-        realRosClass(int argc, char** argv);
+        realRosClass();
 
         // Destructor
         ~realRosClass();
 
         // Public methods
+        void start_control_node();
+        void start_streaming_node();
+
         void show_streaming();
         void send_command(int direc);
-        bool keyboard_control();
+        void keyboard_control();
+        
         void rosSpin();
         void rosSpinOnce();
         
         void start_ncurses();
         void end_ncurses();
         void info_control();
+
+        // Public methods
+        bool running;
 };
 
 #endif //REALROSCLASS_H

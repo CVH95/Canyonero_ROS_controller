@@ -10,33 +10,48 @@
 
 using namespace std;
 
-realRosClass * realRos;
+/*realRosClass * realRos;
 
 bool run_controller()
 {
+    bool _cntr = true;
+
     if(ros::ok())
     {
-        realRos->show_streaming();
-        bool _cntr = realRos->keyboard_control();
+        _cntr = realRos->keyboard_control();
         realRos->rosSpinOnce();
     }
     else
     {
+        _cntr = false;
         realRos->end_ncurses();
-        cout << "Shutting down Canyonero's controller." << endl;
+        //cout << "Shutting down Canyonero's controller." << endl;
     }
-}
+    
+    return _cntr; 
+}*/
 
 int main(int argc, char** argv)
 {
     // Start ROS
-    realRos = new realRosClass(argc, argv);
+    realRosClass * realRos = new realRosClass();
     
     // Start ncurses
-    realRos->start_ncurses();
+    realRos->start_control_node();
 
-    while(run_controller()){}
+    while(ros::ok())
+    {
+        realRos->keyboard_control();
+        if(!realRos->running)
+        {
+            break;
+        }
+    }
 
+    // Remove window
+    realRos->end_ncurses();
+
+    // Shutdown
     delete realRos;
 
     return 0;

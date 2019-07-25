@@ -29,8 +29,12 @@ include_directories(
 add_library(realRosClass SHARED src/realRosClass.cpp)
 
 ## C++ executable: Canyonero_ros_controller_node
-add_executable(canyonero_ros_controller_node src/ros_controller.cpp)
-target_link_libraries(canyonero_ros_controller_node realRosClass ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${ROS_LIBRARIES} ncurses)
+add_executable(canyonero_ros_control_node src/ros_controller.cpp)
+target_link_libraries(canyonero_ros_control_node realRosClass ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${ROS_LIBRARIES} ncurses)
+
+## C++ executable: Canyonero_ros_stream_node
+add_executable(canyonero_ros_stream_node src/ros_stream.cpp)
+target_link_libraries(canyonero_ros_stream_node realRosClass ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${ROS_LIBRARIES} ncurses)
 
 # Install targets
 #install(TARGETS canyonero_ros_controller_node
@@ -38,6 +42,11 @@ target_link_libraries(canyonero_ros_controller_node realRosClass ${catkin_LIBRAR
 #  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 #)
+
+# Install Launch files
+install(DIRECTORY launch/
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
+  PATTERN ".svn" EXCLUDE)
 
 message("CMake is done!")
 message("Exit compilation")
