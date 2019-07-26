@@ -25,6 +25,7 @@
 #include <sensor_msgs/image_encodings.h>
 #include <geometry_msgs/PointStamped.h>
 #include <std_msgs/Int32.h>
+#include <std_msgs/String.h>
 
 using namespace std;
 namespace enc = sensor_msgs::image_encodings;
@@ -35,20 +36,20 @@ class realRosClass
 
         // Private ROS variables
         ros::Publisher pub_direction;
-        //ros::Subscriber img_subscriber;
+        ros::Subscriber state_subscriber;
         image_transport::Subscriber sub;
         ros::Rate* rate;
 
         sensor_msgs::ImagePtr ros_img;
         cv::Mat frame;
         void streamCallback(const sensor_msgs::ImageConstPtr& img);
-        //void streamCallback(const sensor_msgs::Image& img);
+        void stateCallback(const std_msgs::String::ConstPtr& msg);
 
         string controller_name = "canyonero_ros_control_node";
         string stream_name = "canyonero_ros_streaming_node";
         int _Direction = 0;
         int speed = 50;
-        string state = "STOP";
+        string state = "INIT";
         WINDOW * win;
 
     public:
@@ -64,6 +65,7 @@ class realRosClass
         void start_streaming_node();
 
         void show_streaming();
+        string get_state();
         void send_command(int direc);
         void keyboard_control();
         
@@ -72,7 +74,7 @@ class realRosClass
         
         void start_ncurses();
         void end_ncurses();
-        void info_control();
+        void info_control(string ss);
 
         // Public methods
         bool running;

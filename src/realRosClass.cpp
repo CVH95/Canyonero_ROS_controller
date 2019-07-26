@@ -49,6 +49,9 @@ void realRosClass::start_control_node()
 	// Start publisher:
     pub_direction = node.advertise<std_msgs::Int32>("/gpio_driver/joint_direction", 1);
 
+	// Start subscriber
+	state_subscriber = node.subscribe("/gpio_driver/state", 1, &realRosClass::stateCallback, this);
+
 	rate = new ros::Rate(17*4);
 }
 
@@ -117,19 +120,10 @@ void realRosClass::streamCallback(const sensor_msgs::ImageConstPtr& img)
 
 
 // Receive video stream
-/*void realRosClass::streamCallback(const sensor_msgs::Image& img)
+void realRosClass::stateCallback(const std_msgs::String::ConstPtr& msg)
 {
-    try
-    {
-        cv_bridge::CvImagePtr cv_img;
-        cv_img = cv_bridge::toCvCopy(img, "bgr8");
-        frame = cv_img->image;
-    }
-    catch(cv_bridge::Exception& e)
-    {
-        ROS_ERROR("Could not convert from Image Msg to 'bgr8'.");
-    }
-}*/
+   state = msg->data;
+}
 
 
 // Show video stream
@@ -137,6 +131,13 @@ void realRosClass::show_streaming()
 {
     cv::imshow("Canyonero Onboard View", frame);
     cv::waitKey(30);
+}
+
+
+string realRosClass::get_state()
+{
+	string s = state;
+	return s;
 }
 
 
@@ -156,39 +157,40 @@ void realRosClass::keyboard_control()
 
     int cht = 0;
 	running = true;
-	info_control();
+	string _st = get_state();
+	info_control(_st);
 	cht = getch();
 	
 	switch(cht)
 	{
 		case 'w':
 			_Direction = 8;
-			state = "FWRD";
+			//state = "FWRD";
 			running = true;
 			break;
 		case 's':
 			_Direction = 2;
-			state = "BACK";
+			//state = "BACK";
 			running = true;
 			break;
 		case 'd':
 			_Direction = 6;
-			state = "RGHT";
+			//state = "RGHT";
 			running = true;
 			break;
 		case 'a':
 			_Direction = 4;
-			state = "LEFT";
+			//state = "LEFT";
 			running = true;
 			break;
 		case 'b':
 			_Direction = 0;
-			state = "STOP";
+			//state = "STOP";
 			running = true;
 			break;
 		case 'k':
 			_Direction = 9;
-			running = true;
+			//running = true;
 			break;
 		case 'j':
 			_Direction = 7;
@@ -196,7 +198,7 @@ void realRosClass::keyboard_control()
 			break;
 		case 'p':
 			_Direction = 5;
-            state = "STOP";
+            //state = "STOP";
 			move(15, 0);
 			printw("Shutting down Canyonero");
 			running = false;
@@ -246,7 +248,7 @@ void realRosClass::start_ncurses()
 	cbreak();
 	
 	// Create window
-	win = newwin(16, 50, 0, 0);
+	win = newwin(16, 150, 0, 0);
 }
 
 
@@ -259,7 +261,7 @@ void realRosClass::end_ncurses()
 
 
 // Display message in ncurses window
-void realRosClass::info_control()
+void realRosClass::info_control(string ss)
 {
     move(2,0);
 	printw("... ROS Keyboard Teleoperation ...");
@@ -280,7 +282,8 @@ void realRosClass::info_control()
 	move(11,0);
 	printw("  >> Exit program: p");
 	move(14,0);
-	printw("Direction = %s", state.c_str());
+	string _st = get_state();
+	printw("%s", _st.c_str());
 	//move(14,0);
 	//printw("Current speed = %d (%)", speed);
 }
