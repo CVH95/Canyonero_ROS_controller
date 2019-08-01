@@ -3,33 +3,13 @@
 
 // ROS Controller
 
-// Receives the webCam streaming.
 // Publish GPIO commands from keyboard control.
 
 #include "realRosClass.h"
 
+
 using namespace std;
 
-/*realRosClass * realRos;
-
-bool run_controller()
-{
-    bool _cntr = true;
-
-    if(ros::ok())
-    {
-        _cntr = realRos->keyboard_control();
-        realRos->rosSpinOnce();
-    }
-    else
-    {
-        _cntr = false;
-        realRos->end_ncurses();
-        //cout << "Shutting down Canyonero's controller." << endl;
-    }
-    
-    return _cntr; 
-}*/
 
 int main(int argc, char** argv)
 {
@@ -37,15 +17,21 @@ int main(int argc, char** argv)
     realRosClass * realRos = new realRosClass();
     
     // Start ncurses
+    realRos->start_ncurses();
+
+    // Start nodes
     realRos->start_control_node();
 
     while(ros::ok())
-    {
+    {   
+        string _state = realRos->get_state();
+        realRos->info_control(_state);
         realRos->keyboard_control();
         if(!realRos->running)
         {
             break;
         }
+        realRos->rosSpinOnce();
     }
 
     // Remove window

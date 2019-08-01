@@ -49,8 +49,8 @@ class realRosClass
         string stream_name = "canyonero_ros_streaming_node";
         int _Direction = 0;
         int speed = 50;
-        string state = "INIT";
         WINDOW * win;
+        int rate_error;
 
     public:
 
@@ -77,6 +77,7 @@ class realRosClass
         void info_control(string ss);
 
         // Public methods
+        string state = "INIT";
         bool running;
 };
 

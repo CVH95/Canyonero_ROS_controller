@@ -49,9 +49,6 @@ void realRosClass::start_control_node()
 	// Start publisher:
     pub_direction = node.advertise<std_msgs::Int32>("/gpio_driver/joint_direction", 1);
 
-	// Start subscriber
-	state_subscriber = node.subscribe("/gpio_driver/state", 1, &realRosClass::stateCallback, this);
-
 	rate = new ros::Rate(17*4);
 }
 
@@ -84,7 +81,7 @@ void realRosClass::start_streaming_node()
 
 	//Start subscriber:
     image_transport::Subscriber img_subscriber = it.subscribe("/camera_driver/image_raw", 1, &realRosClass::streamCallback, this);
-
+	state_subscriber = node.subscribe("/gpio_driver/state", 1, &realRosClass::stateCallback, this);
 	rosSpin();
 
 	//cv::destroyWindow("Canyonero Onboard View");
@@ -103,7 +100,7 @@ void realRosClass::streamCallback(const sensor_msgs::ImageConstPtr& img)
 
 		if(!fframe.empty())
 		{
-			ROS_INFO("Received frame data.");
+			//ROS_INFO("Received frame data.");
 			cv::imshow("Canyonero Onboard View", fframe);
         	cv::waitKey(1);
 		}
@@ -123,6 +120,7 @@ void realRosClass::streamCallback(const sensor_msgs::ImageConstPtr& img)
 void realRosClass::stateCallback(const std_msgs::String::ConstPtr& msg)
 {
    state = msg->data;
+   ROS_INFO("%s", state.c_str());
 }
 
 
@@ -153,12 +151,13 @@ void realRosClass::send_command(int direc)
 // ROS Keyboard Teleop
 void realRosClass::keyboard_control()
 {
-	start_ncurses();
+	//start_ncurses();
+	//wclear(win);
 
     int cht = 0;
 	running = true;
-	string _st = get_state();
-	info_control(_st);
+	//string _st = get_state();
+	//info_control(_st);
 	cht = getch();
 	
 	switch(cht)
@@ -188,12 +187,39 @@ void realRosClass::keyboard_control()
 			//state = "STOP";
 			running = true;
 			break;
-		case 'k':
+		case 'x':
 			_Direction = 9;
-			//running = true;
+			running = true;
+			break;
+		case 'z':
+			_Direction = 7;
+			running = true;
+			break;
+		case 'm':
+			_Direction = 11;
+			break;
+		case 'i':
+			_Direction = 21;
+			running = true;
+			break;
+		case 'k':
+			_Direction = 22;
+			running = true;
+			break;
+		case 'l':
+			_Direction = 23;
+			running = true;
 			break;
 		case 'j':
-			_Direction = 7;
+			_Direction = 24;
+			running = true;
+			break;
+		case 't':
+			_Direction = 31;
+			running = true;
+			break;
+		case 'y':
+			_Direction = 32;
 			running = true;
 			break;
 		case 'p':
@@ -209,15 +235,14 @@ void realRosClass::keyboard_control()
     send_command(_Direction);
 
 	// Update state on ncurses window
-    wrefresh(win);
-
-	rosSpinOnce();
+	//refresh();
 }
 
 
 // Handling ros::spin()
 void realRosClass::rosSpin()
 {
+	wrefresh(win);
     ros::spin();
 }
 
@@ -225,12 +250,20 @@ void realRosClass::rosSpin()
 // Handling ros::spinOnce()
 void realRosClass::rosSpinOnce()
 {
-    ros::spinOnce();
+    //redrawwin(win);
+	
+	ros::spinOnce();
 	bool rateMet = rate->sleep();
+
+	//wclear(win);
+	//string _s = get_state();
+	//info_control(_s);
+	
 	
 	if(!rateMet)
 	{
-		ROS_ERROR("Sleep rate not met!");
+		//ROS_ERROR("Sleep rate not met!");
+		rate_error++;
 	}
 }
 
@@ -248,7 +281,7 @@ void realRosClass::start_ncurses()
 	cbreak();
 	
 	// Create window
-	win = newwin(16, 150, 0, 0);
+	win = newwin(25, 50, 0, 0);
 }
 
 
@@ -257,14 +290,18 @@ void realRosClass::end_ncurses()
 {
     endwin();
     cout << "Shutting down Canyonero's controller." << endl;
+	cout << "Sleep rate errors: " << rate_error << endl;
 }
 
 
 // Display message in ncurses window
 void realRosClass::info_control(string ss)
 {
-    move(2,0);
-	printw("... ROS Keyboard Teleoperation ...");
+	wclear(win);
+	move(0,0);
+	printw("... Runing Keyboard Teleoperation ...");
+	move(2,0);
+	printw("MOTION:");
 	move(4,0);
 	printw("  >> Forward: w");
 	move(5,0);
@@ -276,14 +313,25 @@ void realRosClass::info_control(string ss)
 	move(8,0);
 	printw("  >> Stop: b");
 	move(9,0);
-	printw("  >> Increase speed: k");
+	printw("  >> Increase speed: x");
 	move(10,0);
-	printw("  >> Reduce speed: j");
+	printw("  >> Reduce speed: z");
 	move(11,0);
-	printw("  >> Exit program: p");
-	move(14,0);
-	string _st = get_state();
-	printw("%s", _st.c_str());
-	//move(14,0);
-	//printw("Current speed = %d (%)", speed);
+	printw("  >> Switch OFF Canyonero: p");
+	move(13,0);
+	printw("VISION PLATFORM:");
+	move(15,0);
+	printw("  >> Unlock platform: t");
+	move(16,0);
+	printw("  >> Lock platform: y");
+	move(17,0);
+	printw("  >> Rotate up: i");
+	move(18,0);
+	printw("  >> Rotate Down: k");
+	move(19,0);
+	printw("  >> Rotate right: l");
+	move(20,0);
+	printw("  >> Rotate left:j");
+	move(21,0);
+	printw("  >> Lights: m");
 }
